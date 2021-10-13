@@ -1,0 +1,3 @@
+{:input-periods "/Users/henry/MastodonC/witan.cic/data/scc/2021-09-28/output/projection-periods.edn"
+ :output-episodes "data/output/projection-episodes.csv"
+ :scenario-parameters "data/input/duration-scenario.csv"}
