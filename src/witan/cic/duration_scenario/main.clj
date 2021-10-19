@@ -22,6 +22,6 @@
         {:keys [config-file]} options
         [task] arguments]
     (case task
-      "duration-scenario" (core/duration-scenario (read-config config-file))
+      "duration-scenario" (core/duration-scenario! (read-config config-file))
       :else nil)))
 

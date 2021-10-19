@@ -11,6 +11,14 @@
 (defn blank-row? [row]
   (every? str/blank? row))
 
+(defn parse-long
+  [s]
+  (Long/parseLong s))
+
+(defn parse-double
+  [s]
+  (Double/parseDouble s))
+
 (defn load-csv
   "Loads csv file with each row as a vector.
    Stored in map separating column-names from data"
@@ -32,4 +40,13 @@
   (with-open [in-file (io/reader periods-file)]
     (edn/read {:readers c/data-readers}
               (PushbackReader. in-file))))
+
+(defn scenario-parameters
+  [parameters-file]
+  (->> (load-csv parameters-file)
+       (map (fn [row]
+              (-> row
+                  (update :placement symbol)
+                  (update :duration-cap-days parse-long)
+                  (update :probability-cap-applies parse-double))))))
 
