@@ -2,8 +2,10 @@
  :deps  {aero {:mvn/version "1.1.6"}
          camel-snake-kebab {:mvn/version "0.4.0"}
          clj-time/clj-time {:mvn/version "0.15.0"}
+         kixi/stats {:mvn/version "0.5.4"}
          org.clojure/clojure  {:mvn/version "1.10.1"}
          org.clojure/data.csv {:mvn/version "1.0.0"}
+         org.clojure/test.check {:mvn/version "1.1.0"}
          org.clojure/tools.cli {:mvn/version "1.0.206"}}
  :aliases
  {:test  {:extra-paths ["test"]

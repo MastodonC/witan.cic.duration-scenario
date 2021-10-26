@@ -2,4 +2,5 @@
  :output-periods ""
  :scenario-parameters ""
  :output-periods-csv ""
- :project-to #date "2024-03-31"}
+ :project-to #date "2024-03-31"
+ :random-seed 42}
