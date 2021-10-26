@@ -4,24 +4,33 @@
             [witan.cic.duration-scenario.time :as time]
             [witan.cic.duration-scenario.random :as r]))
 
+(defn add-duration-to-episodes-reducer
+  "The duration of each episode is implied by the gap between consecutive offsets.
+  This is inconvenient for our purposes, so this function adds a duration key
+  by calculating the days between consecutive episodes, or between
+  the offset of the final episode and the end of the period."
+  [period-duration [acc episodes] [{:keys [placement] :as episode} {:keys [offset]}]]
+  (let [duration (if offset
+                   (- offset acc)
+                   (- period-duration (:offset episode)))]
+    [(+ acc duration) (conj episodes (assoc episode :duration duration))]))
+
+(defn apply-duration-cap-reducer
+  "Apply the duration cap whilst reducing over episodes. If the duration cap is triggered, return a `reduced` to short-circuit completion."
+  [{:keys [snapshot-date provenance beginning]} target-placement duration-cap-days [total-duration episodes] {:keys [placement duration] :as episode}]
+  (if (and (= placement target-placement)
+           (> duration duration-cap-days)
+           (or (= provenance "S")
+               (time/<= snapshot-date (time/days-after beginning (+ total-duration duration-cap-days)))))
+    (reduced [(+ total-duration duration-cap-days) (conj episodes (dissoc episode :duration))])
+    [(+ total-duration duration) (conj episodes (dissoc episode :duration))]))
+
 (defn apply-stochastic-rule-to-period
   [{:keys [episodes beginning end duration snapshot-date provenance] :as period} target-placement duration-cap-days probability-cap-applies random-seed]
   (let [cap-triggered? (<= (r/rand-long random-seed) probability-cap-applies)
-        episodes (-> (reduce (fn [[acc episodes] [{:keys [placement] :as episode} {:keys [offset]}]]
-                               (let [duration (if offset
-                                                (- offset acc)
-                                                (- duration (:offset episode)))]
-                                 [(+ acc duration) (conj episodes (assoc episode :duration duration))]))
-                             [0 []]
-                             (partition-all 2 1 episodes))
+        episodes (-> (reduce (partial add-duration-to-episodes-reducer duration) [0 []] (partition-all 2 1 episodes))
                      (last))
-        [total-duration episodes] (reduce (fn [[total-duration episodes] {:keys [placement duration] :as episode}]
-                                            (if (and (= placement target-placement)
-                                                     (> duration duration-cap-days)
-                                                     (or (= provenance "S")
-                                                         (time/<= snapshot-date (time/days-after beginning (+ total-duration duration-cap-days)))))
-                                              (reduced [(+ total-duration duration-cap-days) (conj episodes (dissoc episode :duration))])
-                                              [(+ total-duration duration) (conj episodes (dissoc episode :duration))]))
+        [total-duration episodes] (reduce (partial apply-duration-cap-reducer period target-placement duration-cap-days)
                                           [0 []]
                                           episodes)]
     (if (not= total-duration duration)
@@ -56,7 +65,7 @@
         scenario-periods (reduce apply-duration-scenario-rule {:simulations period-simulations
                                                                :random-seed (r/seed random-seed)}
                                  parameters)]
-    (write/write-edn! output-periods scenario-periods)
+    (write/write-nippy! output-periods scenario-periods)
     (->> scenario-periods
          (remove (comp #{:remove} :marked))
          (write/episodes-table project-to)

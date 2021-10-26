@@ -1,7 +1,8 @@
 (ns witan.cic.duration-scenario.io.write
   (:require [clojure.java.io :as io]
-            [witan.cic.duration-scenario.time :as time]
-            [clojure.data.csv :as data-csv]))
+            [clojure.data.csv :as data-csv]
+            [taoensso.nippy :as nippy]
+            [witan.cic.duration-scenario.time :as time]))
 
 (defn period->episodes
   [{:keys [period-id simulation-id beginning dob birthday admission-age episodes end provenance
@@ -91,3 +92,8 @@
   (with-open [writer (io/writer out-file)]
     (binding [*out* writer]
       (pr data))))
+
+(defn write-nippy!
+  [out-file data]
+  (with-open [writer (io/output-stream out-file)]
+    (.write writer (nippy/freeze data))))
