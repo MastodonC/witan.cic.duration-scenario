@@ -25,6 +25,12 @@
     (reduced [(+ total-duration duration-cap-days) (conj episodes (dissoc episode :duration))])
     [(+ total-duration duration) (conj episodes (dissoc episode :duration))]))
 
+(defn assoc-some
+  [coll k v]
+  (cond-> coll
+    (not (contains? coll k))
+    (assoc k v)))
+
 (defn apply-stochastic-rule-to-period
   [{:keys [episodes beginning end duration snapshot-date provenance] :as period} target-placement duration-cap-days probability-cap-applies random-seed]
   (let [cap-triggered? (<= (r/rand-long random-seed) probability-cap-applies)
@@ -41,8 +47,8 @@
                     (assoc :episodes episodes)
                     (assoc :duration total-duration)
                     (assoc :end (time/days-after beginning total-duration))))
-        (vector (assoc period :marked :not-applied)))
-      (vector (assoc period :marked :not-applicable)))))
+        (vector (assoc-some period :marked :not-applied)))
+      (vector (assoc-some period :marked :not-applicable)))))
 
 (defn apply-stochastic-rule-to-simulation
   [periods placement duration-cap-days probability-cap-applies random-seed]
@@ -62,9 +68,10 @@
   [{:keys [input-periods output-periods output-periods-csv scenario-parameters project-to random-seed] :as config}]
   (let [period-simulations (read/periods input-periods)
         parameters (read/scenario-parameters scenario-parameters)
-        scenario-periods (reduce apply-duration-scenario-rule {:simulations period-simulations
-                                                               :random-seed (r/seed random-seed)}
-                                 parameters)]
+        scenario-periods (-> (reduce apply-duration-scenario-rule {:simulations period-simulations
+                                                                   :random-seed (r/seed random-seed)}
+                                     parameters)
+                             :simulations)]
     (write/write-nippy! output-periods scenario-periods)
     (->> scenario-periods
          (remove (comp #{:remove} :marked))
