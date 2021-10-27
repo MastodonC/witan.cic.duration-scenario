@@ -74,6 +74,6 @@
                              :simulations)]
     (write/write-nippy! output-periods scenario-periods)
     (->> scenario-periods
-         (remove (comp #{:remove} :marked))
+         (into [] (map (partial into [] (remove (comp #{:remove} :marked)))))
          (write/episodes-table project-to)
          (write/write-csv! output-periods-csv))))

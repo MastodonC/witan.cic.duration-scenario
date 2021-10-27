@@ -46,7 +46,7 @@
   (->> (load-csv parameters-file)
        (map (fn [row]
               (-> row
-                  (update :placement symbol)
+                  (update :placement keyword)
                   (update :duration-cap-days parse-long)
                   (update :probability-cap-applies parse-double))))))
 

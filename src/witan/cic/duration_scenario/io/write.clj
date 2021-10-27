@@ -19,8 +19,6 @@
         period-duration (time/day-interval beginning end)]
     (into []
           (comp
-           #_(filter (fn [[a b]]
-                       (or (nil? b) (> (:offset b) (:offset a)))))
            (map-indexed (fn [idx [{:keys [placement offset]} to]]
                           (hash-map :period-id period-id
                                     :simulation-id simulation-id
@@ -46,30 +44,28 @@
 
 (defn episodes->table-rows-xf
   [project-to]
-  (comp #_(filter (fn [{:keys [period-id dob episode start end placement]}]
-                    (time/< start project-to)))
-        (map (fn [{:keys [period-id simulation-id dob birthday admission-age
-                          episode-number start end placement offset
-                          provenance placement-sequence placement-pathway
-                          period-start period-duration period-end period-offset
-                          match-offset matched-id matched-offset] :as episode}]
-               (vector simulation-id period-id
-                       episode-number dob admission-age
-                       (time/date-as-string birthday)
-                       (time/date-as-string start)
-                       (when end (time/date-as-string end)) ;; TODO - why would a period have no end date?
-                       (name placement)
-                       offset
-                       provenance
-                       placement-sequence
-                       placement-pathway
-                       (time/date-as-string period-start)
-                       period-duration
-                       (time/date-as-string period-end)
-                       period-offset
-                       match-offset
-                       matched-id
-                       matched-offset)))))
+  (map (fn [{:keys [period-id simulation-id dob birthday admission-age
+                    episode-number start end placement offset
+                    provenance placement-sequence placement-pathway
+                    period-start period-duration period-end period-offset
+                    match-offset matched-id matched-offset] :as episode}]
+         (vector simulation-id period-id
+                 episode-number dob admission-age
+                 (time/date-as-string birthday)
+                 (time/date-as-string start)
+                 (when end (time/date-as-string end)) ;; TODO - why would a period have no end date?
+                 (name placement)
+                 offset
+                 provenance
+                 placement-sequence
+                 placement-pathway
+                 (time/date-as-string period-start)
+                 period-duration
+                 (time/date-as-string period-end)
+                 period-offset
+                 match-offset
+                 matched-id
+                 matched-offset))))
 
 (defn episodes-table
   [project-to projections]
