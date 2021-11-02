@@ -1,0 +1,26 @@
+{:paths ["src" "resources"]
+ :deps  {aero {:mvn/version "1.1.6"}
+         camel-snake-kebab {:mvn/version "0.4.0"}
+         clj-time/clj-time {:mvn/version "0.15.0"}
+         com.taoensso/nippy {:mvn/version "3.1.1"}
+         kixi/stats {:mvn/version "0.5.4"}
+         net.cgrand/xforms {:mvn/version"0.19.2"}
+         org.clojure/clojure  {:mvn/version "1.10.1"}
+         org.clojure/data.csv {:mvn/version "1.0.0"}
+         org.clojure/test.check {:mvn/version "1.1.0"}
+         org.clojure/tools.cli {:mvn/version "1.0.206"}}
+ :aliases
+ {:test  {:extra-paths ["test"]
+          :extra-deps  {org.clojure/test.check {:mvn/version "1.0.0"}}}
+  :runner
+  {:extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner"
+                 :sha     "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
+   :main-opts  ["-m" "cognitect.test-runner"
+                "-d" "test"]}
+  :jar     {:extra-deps {seancorfield/depstar {:mvn/version "1.0.94"}}
+            :main-opts  ["-m" "hf.depstar.jar" "witan.cic.duration-scenario.jar"]}
+  :install {:extra-deps {deps-deploy/deps-deploy {:mvn/version "0.0.9"}}
+            :main-opts  ["-m" "deps-deploy.deps-deploy" "install" "witan.cic.duration-scenario.jar"]}
+  :deploy  {:extra-deps {deps-deploy/deps-deploy {:mvn/version "0.0.9"}}
+            :main-opts  ["-m" "deps-deploy.deps-deploy" "deploy" "witan.cic.duration-scenario.jar"]}}}
