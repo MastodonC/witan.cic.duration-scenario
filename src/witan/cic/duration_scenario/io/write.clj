@@ -1,6 +1,7 @@
 (ns witan.cic.duration-scenario.io.write
   (:require [clojure.java.io :as io]
             [clojure.data.csv :as data-csv]
+            [net.cgrand.xforms :as x]
             [taoensso.nippy :as nippy]
             [witan.cic.duration-scenario.time :as time]))
 
@@ -19,6 +20,7 @@
         period-duration (time/day-interval beginning end)]
     (into []
           (comp
+           (x/partition 2 1 [nil])
            (map-indexed (fn [idx [{:keys [placement offset]} to]]
                           (hash-map :period-id period-id
                                     :simulation-id simulation-id
@@ -40,7 +42,7 @@
                                     :match-offset match-offset
                                     :matched-id matched-id
                                     :matched-offset matched-offset))))
-          (partition-all 2 1 episodes))))
+          episodes)))
 
 (defn episodes->table-rows-xf
   [project-to]
@@ -53,7 +55,7 @@
                  episode-number dob admission-age
                  (time/date-as-string birthday)
                  (time/date-as-string start)
-                 (when end (time/date-as-string end)) ;; TODO - why would a period have no end date?
+                 (time/date-as-string end)
                  (name placement)
                  offset
                  provenance
@@ -70,7 +72,7 @@
 (defn episodes-table
   [project-to projections]
   (let [headers ["Simulation" "ID" "Episode" "Birth Year" "Admission Age" "Birthday" "Start" "End" "Placement" "Offset" "Provenance"
-                 "Placement Sequence" "Placement Pathway" "Period Start" "Period Duration" "Period End" "Period Offset"
+                 "Placement Sequence" "Placement thway" "Period Start" "Period Duration" "Period End" "Period Offset"
                  "Match Offset" "Matched ID" "Matched Offset"]]
     (into [headers]
           (comp cat

@@ -1,8 +1,7 @@
 (ns witan.cic.duration-scenario.core
-  (:require [witan.cic.duration-scenario.io.read :as read]
-            [witan.cic.duration-scenario.io.write :as write]
-            [witan.cic.duration-scenario.time :as time]
-            [witan.cic.duration-scenario.random :as r]))
+  (:require [witan.cic.duration-scenario.domain :as domain]
+            [witan.cic.duration-scenario.random :as r]
+            [witan.cic.duration-scenario.time :as time]))
 
 (defn add-duration-to-episodes-reducer
   "The duration of each episode is implied by the gap between consecutive offsets.
@@ -20,7 +19,7 @@
   [{:keys [snapshot-date provenance beginning]} target-placement duration-cap-days [total-duration episodes] {:keys [placement duration] :as episode}]
   (if (and (= placement target-placement)
            (> duration duration-cap-days)
-           (or (= provenance "S")
+           (or (= provenance domain/provenance-simulated)
                (time/<= snapshot-date (time/days-after beginning (+ total-duration duration-cap-days)))))
     (reduced [(+ total-duration duration-cap-days) (conj episodes (dissoc episode :duration))])
     [(+ total-duration duration) (conj episodes (dissoc episode :duration))]))
@@ -53,9 +52,8 @@
 (defn apply-stochastic-rule-to-simulation
   [periods placement duration-cap-days probability-cap-applies random-seed]
   (into []
-        (comp (map (fn [[period random-seed]]
-                     (apply-stochastic-rule-to-period period placement duration-cap-days probability-cap-applies random-seed)))
-              cat)
+        (mapcat (fn [[period random-seed]]
+                  (apply-stochastic-rule-to-period period placement duration-cap-days probability-cap-applies random-seed)))
         (map vector periods (r/split-n random-seed (count periods)))))
 
 (defn apply-duration-scenario-rule
@@ -64,16 +62,9 @@
       (update :simulations (partial into [] (map #(apply-stochastic-rule-to-simulation % placement duration-cap-days probability-cap-applies random-seed))))
       (update :random-seed r/next-seed)))
 
-(defn duration-scenario!
-  [{:keys [input-periods output-periods output-periods-csv scenario-parameters project-to random-seed] :as config}]
-  (let [period-simulations (read/periods input-periods)
-        parameters (read/scenario-parameters scenario-parameters)
-        scenario-periods (-> (reduce apply-duration-scenario-rule {:simulations period-simulations
-                                                                   :random-seed (r/seed random-seed)}
-                                     parameters)
-                             :simulations)]
-    (write/write-nippy! output-periods scenario-periods)
-    (->> scenario-periods
-         (into [] (map (partial into [] (remove (comp #{:remove} :marked)))))
-         (write/episodes-table project-to)
-         (write/write-csv! output-periods-csv))))
+(defn apply-duration-scenario-rules
+  [period-simulations parameters random-seed]
+  (-> (reduce apply-duration-scenario-rule {:simulations period-simulations
+                                            :random-seed (r/seed random-seed)}
+              parameters)
+      :simulations))
