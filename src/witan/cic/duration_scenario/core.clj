@@ -63,6 +63,10 @@
       (update :random-seed r/next-seed)))
 
 (defn apply-duration-scenario-rules
+  "The main entrypoint for REPL-based execution.
+  period-simulations is the periods.edn output from witan.cic
+  parameters is the sequence of maps representing the scenario
+  random-seed is a long."
   [period-simulations parameters random-seed]
   (-> (reduce apply-duration-scenario-rule {:simulations period-simulations
                                             :random-seed (r/seed random-seed)}
