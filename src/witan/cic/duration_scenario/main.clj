@@ -19,9 +19,9 @@
     :id :config-file]])
 
 (defn run-duration-scenario!
-  [{:keys [input-periods output-periods output-periods-csv scenario-parameters project-to random-seed] :as config}]
+  [{:keys [input-periods output-periods output-periods-csv input-parameters project-to random-seed] :as config}]
   (let [period-simulations (read/periods input-periods)
-        parameters (read/scenario-parameters scenario-parameters)
+        parameters (read/scenario-parameters input-parameters)
         scenario-periods (core/apply-duration-scenario-rules period-simulations parameters random-seed)]
     (write/write-nippy! output-periods scenario-periods)
     (->> scenario-periods
